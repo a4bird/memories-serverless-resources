@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Handle compliance events from the account api
+Parameters:
+  SLUG:
+    Type: String
+    Description: The name appended to resources to enable separate stacks for feature
+      branches
+  EnvironmentSuffix:
+    Description: A name appended to resources to enable separte stacks per environment.
+    Type: String
+  Environment:
+    Description: The environment to use for configuration of the application.
+    Type: String
+  Project:
+    Description: The project name.
+    Type: String
+Conditions:
+  IsMaster:
+    Fn::Equals:
+    - Ref: SLUG
+    - main
+Resources:
+  MemoriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: a4bird-memories-table-${EnvironmentSuffix}-${SLUG}
+      AttributeDefinitions:
+      - AttributeName: PK
+        AttributeType: S
+      - AttributeName: Filename
+        AttributeType: S
+      - AttributeName: UploadDate
+        AttributeType: S
+      - AttributeName: MarkedForDeletion
+        AttributeType: B
+      KeySchema:
+      - AttributeName: PK
+        KeyType: HASH
+      - AttributeName: Filename
+        KeyType: RANGE
+      LocalSecondaryIndexes:
+      - IndexName: PK-UploadDate-Idx
+        KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: UploadDate
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      - IndexName: PK-MarkedForDeletion-Idx
+        KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: MarkedForDeletion
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+Outputs:
+  DynamoDbTableMemories:
+    Description: Created dynamodb table memories
+    Value:
+      Ref: MemoriesTable
+    Export:
+      Name:
+        Fn::Sub: a4bird-memories-sls-resources-${EnvironmentSuffix}-${SLUG}::table

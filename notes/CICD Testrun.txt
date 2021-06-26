@@ -1,0 +1,24 @@
+---- CICD
+cd build
+export AWS_PROFILE=serverless-admin-role
+
+-- build
+
+export PROJECT=a4bird-memories-sls-resources
+export BUILD_NUMBER=1.0.0.1
+export SLUG=main
+
+./build.sh
+
+-- deploy
+
+export PROJECT=a4bird-memories-sls-resources
+export BUILD_NUMBER=1.0.0.1
+export SLUG=main
+export ENV_SUFFIX=dev
+export ENVIRONMENT=Development
+
+./deploy.sh
+
+-- cleanup
+rm -rf packages/

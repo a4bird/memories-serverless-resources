@@ -1,0 +1,17 @@
+  DynamoFullAccessPolicy:
+      Type: AWS::IAM::ManagedPolicy
+      Properties:
+        ManagedPolicyName: !Sub a4bird-memories-table-policy-${EnvironmentSuffix}-${SLUG}
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:ConditionCheckItem
+                - dynamodb:Query
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+              Resource: 
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/a4bird-memories-table-${EnvironmentSuffix}-${SLUG}
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/a4bird-memories-table-${EnvironmentSuffix}-${SLUG}/index/*

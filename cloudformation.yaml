@@ -23,66 +23,59 @@ Conditions:
   IsMaster: !Equals [!Ref SLUG, "main"]
 
 Resources:
-  LogGroup:
-    Type: AWS::Logs::LogGroup
+  MemoriesTable:
+    Type: "AWS::DynamoDB::Table"    
     Properties:
-      LogGroupName: !Sub /aws/lambda/${Project}-${EnvironmentSuffix}-${SLUG}
-      RetentionInDays: 14
+      TableName: !Sub a4bird-memories-table-${EnvironmentSuffix}-${SLUG}
+      AttributeDefinitions:
+        -
+          AttributeName: "PK"
+          AttributeType: "S"
+        -
+          AttributeName: "Filename"
+          AttributeType: "S"
+        -
+          AttributeName: "UploadDate"
+          AttributeType: "S"
+        -
+          AttributeName: "MarkedForDeletion"
+          AttributeType: "B"
+      KeySchema:
+        - AttributeName: "PK"
+          KeyType: "HASH"
+        - AttributeName: "Filename"
+          KeyType: "RANGE"
+      LocalSecondaryIndexes:
+        -
+          IndexName: PK-UploadDate-Idx
+          KeySchema:
+            -
+              AttributeName: PK
+              KeyType: HASH
+            -
+              AttributeName: UploadDate
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL # Make All columns available in index
+        -
+          IndexName: PK-MarkedForDeletion-Idx
+          KeySchema:
+            -
+              AttributeName: PK
+              KeyType: HASH
+            -
+              AttributeName: MarkedForDeletion
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL # Make All columns available in index
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
 
-  Function:
-    Type: AWS::Serverless::Function
-    DependsOn: LogGroup
-    Properties:
-      FunctionName: !Sub ${Project}-${EnvironmentSuffix}-${SLUG}
-      CodeUri: ./packages/memories-image-ingestor-lambda
-      Handler: Memories.Image.Ingestor.Lambda::Memories.Image.Ingestor.Lambda.Function::Execute
-      Runtime: dotnetcore3.1
-      Timeout: 3*60
-      ReservedConcurrentExecutions: 1
-      Role: !GetAtt FunctionRole.Arn
-      Environment:
-        Variables:
-          Environment: !Ref Environment
+Outputs:
+  DynamoDbTableMemories:
+    Description: Created dynamodb table memories
+    Value: !Ref MemoriesTable
+    Export:
+      Name: !Sub a4bird-memories-sls-resources-${EnvironmentSuffix}-${SLUG}::table
 
-  FunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${Project}-${EnvironmentSuffix}-${SLUG}-role
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-        Version: "2012-10-17"
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AWSLambdaExecute
-      Policies:
-        - PolicyName: lambda-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Sid: DynamoDBTableAccess
-                Action:
-                  - dynamodb:GetRecords
-                  - dynamodb:DescribeTable
-                  - dynamodb:BatchWriteItem
-                  - dynamodb:PutItem
-                  - dynamodb:UpdateItem
-                Resource: "arn:aws:dynamodb:*:*:*"
-              - Effect: Allow
-                Sid: SqsAccess
-                Action:
-                  - sqs:ReceiveMessage
-                  - sqs:DeleteMessage
-                  - sqs:GetQueueAttributes
-                Resource: "arn:aws:sqs:*:*:*"
-
-  
-  SQSEventSourceMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      FunctionName: !GetAtt Function.Arn
-      EventSourceArn: arn:aws:sqs:ap-southeast-2:989464300156:memories-album-photos-test
-      MaximumBatchingWindowInSeconds: 10
