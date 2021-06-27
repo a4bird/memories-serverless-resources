@@ -38,8 +38,8 @@ Resources:
           AttributeName: "UploadDate"
           AttributeType: "S"
         -
-          AttributeName: "MarkedForDeletion"
-          AttributeType: "B"
+          AttributeName: "Status"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "PK"
           KeyType: "HASH"
@@ -58,13 +58,13 @@ Resources:
           Projection:
             ProjectionType: ALL # Make All columns available in index
         -
-          IndexName: PK-MarkedForDeletion-Idx
+          IndexName: PK-Status-Idx
           KeySchema:
             -
               AttributeName: PK
               KeyType: HASH
             -
-              AttributeName: MarkedForDeletion
+              AttributeName: Status
               KeyType: RANGE
           Projection:
             ProjectionType: ALL # Make All columns available in index

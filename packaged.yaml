@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Handle compliance events from the account api
+Description: a4bird memories serverless resources
 Parameters:
   SLUG:
     Type: String
@@ -33,8 +33,8 @@ Resources:
         AttributeType: S
       - AttributeName: UploadDate
         AttributeType: S
-      - AttributeName: MarkedForDeletion
-        AttributeType: B
+      - AttributeName: Status
+        AttributeType: S
       KeySchema:
       - AttributeName: PK
         KeyType: HASH
@@ -49,11 +49,11 @@ Resources:
           KeyType: RANGE
         Projection:
           ProjectionType: ALL
-      - IndexName: PK-MarkedForDeletion-Idx
+      - IndexName: PK-Status-Idx
         KeySchema:
         - AttributeName: PK
           KeyType: HASH
-        - AttributeName: MarkedForDeletion
+        - AttributeName: Status
           KeyType: RANGE
         Projection:
           ProjectionType: ALL
